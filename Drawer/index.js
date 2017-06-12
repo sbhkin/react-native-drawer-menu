@@ -42,6 +42,10 @@ export default class Drawer extends Component {
     duration: 160,
     drawerPosition: positions.Left,
     type: types.Default,
+    leftDrawerType: types.Default,
+    rightDrawerType: types.Default,
+    leftDrawerWidth: 175,
+    rightDrawerWidth: 0,
     showMask: true,
     maskAlpha: 0.4,
     customStyles: {},
@@ -54,9 +58,13 @@ export default class Drawer extends Component {
     rightDisabled: PropTypes.bool,
     drawerContent: PropTypes.object,
     drawerWidth: PropTypes.number,
+    leftDrawerWidth: PropTypes.number,
+    rightDrawerWidth: PropTypes.number,
     duration: PropTypes.number,
     drawerPosition: PropTypes.oneOf(Object.values(positions)),
     type: PropTypes.oneOf(Object.values(types)),
+    leftDrawerType : PropTypes.oneOf(Object.values(types)),
+    rightDrawerType: PropTypes.oneOf(Object.values(types)),
     showMask: PropTypes.bool,
     maskAlpha: PropTypes.number,
     customStyles: PropTypes.object,
@@ -74,6 +82,8 @@ export default class Drawer extends Component {
   componentWillMount() {
     const {
       drawerWidth,
+      leftDrawerWidth,
+      rightDrawerWidth,
       drawerPosition,
       maskAlpha
     } = this.props;
@@ -95,7 +105,7 @@ export default class Drawer extends Component {
           top: 0,
           bottom: 0,
           left: width,
-          right: -this.MAX_DX
+          right: -(width*2-30)
         }
       },
       main: {
@@ -293,6 +303,7 @@ export default class Drawer extends Component {
     let left = this._getCurrentDrawerWidth();
     let maxWidth = this.MAX_DX;
     if (this.isRightActive || !this.isLeft) {
+      maxWidth = width -30;
       maxWidth *= -1;
     }
     this.props.showMask && !this.state.showMask && this.setState({showMask: true});
@@ -351,15 +362,16 @@ export default class Drawer extends Component {
     this.styles.leftDrawer.style.left = -this.MAX_DX + dx;
     this.styles.leftDrawer.style.right = width - dx;
     this.styles.rightDrawer.style.left = width + dx;
-    this.styles.rightDrawer.style.right = -this.MAX_DX - dx;
+    this.styles.rightDrawer.style.right = -width - dx;
+    console.log("w:"+width+",dx:"+dx+",MAX_DX:"+this.MAX_DX);
     this.styles.mask.style.backgroundColor = `rgba(0, 0, 0,
       ${(Math.abs(dx) / this.MAX_DX * this.MAX_ALPHA).toFixed(2)})`;
     this._leftDrawer && this._leftDrawer.setNativeProps(this.styles.leftDrawer);
     this._rightDrawer && this._rightDrawer.setNativeProps(this.styles.rightDrawer);
     this._mask && this._mask.setNativeProps(this.styles.mask);
     if (this.props.type === types.Default || dx === 0) {
-      this.styles.main.style.left = dx;
-      this.styles.main.style.right = -dx;
+        this.styles.main.style.left = dx;
+        this.styles.main.style.right = -dx;
       this._main && this._main.setNativeProps(this.styles.main);
     }
   }
