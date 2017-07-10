@@ -38,19 +38,20 @@ export default class Drawer extends Component {
     disabled: false,
     leftDisabled: false,
     rightDisabled: false,
-    drawerWidth: 300,
+    drawerWidth: 320,
     duration: 160,
     drawerPosition: positions.Left,
     type: types.Default,
     leftDrawerType: types.Default,
-    rightDrawerType: types.Default,
+    rightDrawerType: types.Overlay,
     leftDrawerWidth: 175,
     rightDrawerWidth: 0,
     showMask: true,
     maskAlpha: 0.4,
     customStyles: {},
     startCapture: false,
-    moveCapture: false
+    moveCapture: false,
+    isPanEnable: true,
   }
   static propTypes = {
     disabled: PropTypes.bool,
@@ -77,7 +78,8 @@ export default class Drawer extends Component {
     startCapture: PropTypes.bool,
     moveCapture: PropTypes.bool,
     easingFunc: PropTypes.func,
-    responderNegotiate: PropTypes.func
+    responderNegotiate: PropTypes.func,
+    isPanEnable: PropTypes.bool,
   }
   componentWillMount() {
     const {
@@ -85,7 +87,8 @@ export default class Drawer extends Component {
       leftDrawerWidth,
       rightDrawerWidth,
       drawerPosition,
-      maskAlpha
+      maskAlpha,
+      isPanEnable
     } = this.props;
     this.isLeft = drawerPosition === positions.Both || drawerPosition === positions.Left;
     this.isRight = drawerPosition === positions.Both || drawerPosition === positions.Right;
@@ -127,7 +130,8 @@ export default class Drawer extends Component {
     this.isRightOpen = false;
     this.isLeftActive = false;
     this.isRightActive = false;
-    this._pan = PanResponder.create({
+
+    this._pan = isPanEnable ?  PanResponder.create({
       onStartShouldSetPanResponder: this._onStartShouldSetPanResponder.bind(this),
       onStartShouldSetPanResponderCapture: this._onStartShouldCapture.bind(this),
       onMoveShouldSetPanResponder: this._onMoveShouldSetPanResponder.bind(this),
@@ -138,7 +142,7 @@ export default class Drawer extends Component {
       onPanResponderRelease: this._handlePanResponderEnd.bind(this),
       onPanResponderTerminate: this._handlePanResponderEnd.bind(this),
       onShouldBlockNativeResponder: this._shouldBlockNativeResponder.bind(this)
-    });
+    }) : null ;
     this.state = {
       showMask: false
     };
@@ -178,7 +182,7 @@ export default class Drawer extends Component {
     } = this.props;
     let isOpen = this.isLeftOpen || this.isRightOpen;
     let singleDisabled = (this.isLeftOpen && leftDisabled) || (this.isRightOpen && rightDisabled);
-    if (isOpen && !this.inAnimation && !disabled && !singleDisabled) return true;
+    if (isOpen && !this.inAnimation && !disabled && !singleDisabled) return false;
     return false;
   }
   _onMoveShouldSetPanResponder (evt, gestureState) {
@@ -303,7 +307,7 @@ export default class Drawer extends Component {
     let left = this._getCurrentDrawerWidth();
     let maxWidth = this.MAX_DX;
     if (this.isRightActive || !this.isLeft) {
-      maxWidth = width -30;
+      maxWidth = width;
       maxWidth *= -1;
     }
     this.props.showMask && !this.state.showMask && this.setState({showMask: true});
@@ -364,8 +368,8 @@ export default class Drawer extends Component {
     this.styles.rightDrawer.style.left = width + dx;
     this.styles.rightDrawer.style.right = -width - dx;
     console.log("w:"+width+",dx:"+dx+",MAX_DX:"+this.MAX_DX);
-    this.styles.mask.style.backgroundColor = `rgba(0, 0, 0,
-      ${(Math.abs(dx) / this.MAX_DX * this.MAX_ALPHA).toFixed(2)})`;
+    // this.styles.mask.style.backgroundColor = `rgba(0, 0, 0,
+    //   ${(Math.abs(dx) / this.MAX_DX * this.MAX_ALPHA).toFixed(2)})`;
     this._leftDrawer && this._leftDrawer.setNativeProps(this.styles.leftDrawer);
     this._rightDrawer && this._rightDrawer.setNativeProps(this.styles.rightDrawer);
     this._mask && this._mask.setNativeProps(this.styles.mask);
@@ -402,11 +406,12 @@ export default class Drawer extends Component {
     let leftDrawerContent = this.props.leftDrawerContent ? this._bindDrawerRef(this.props.leftDrawerContent) : null;
     let rightDrawerContent = this.props.rightDrawerContent ? this._bindDrawerRef(this.props.rightDrawerContent) : null;
     return (
-      <View style={styles.container}>
+      <View style={styles.container}
+        {...this._pan && this._pan.panHandlers}
+>
         <View
           ref={this._mainRefBind}
           style={[customStyles.main, styles.absolute]}
-          {...this._pan.panHandlers}
         >
           {this.props.children}
           {this.state.showMask && <View
